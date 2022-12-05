@@ -1,0 +1,13 @@
+{
+  "type": "choppingblock:chopping",
+  "ingredient": {
+    "item": "minecraft:egg"
+  },
+  "result": {
+    "item": "minecraft:oak_planks",
+    "count": 6
+  },
+  "hits": 10,
+  "hitSound": "entity.turtle.egg_crack",
+  "breakSound": "entity.turtle.egg_break"
+}

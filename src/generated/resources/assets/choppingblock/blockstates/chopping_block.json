@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "choppingblock:block/chopping_block"
+    }
+  }
+}

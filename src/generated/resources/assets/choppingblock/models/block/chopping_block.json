@@ -1,0 +1,7 @@
+{
+  "parent": "choppingblock:block/chopping_block_raw",
+  "textures": {
+    "side": "choppingblock:block/chopping_block_side",
+    "end": "minecraft:block/oak_log_top"
+  }
+}
