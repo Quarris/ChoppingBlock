@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 
 public class ChoppingBlock extends Block {
 
-    private static final VoxelShape SHAPE = VoxelShapes.box(0, 0, 0, 1, 12/16f, 1);
+    private static final VoxelShape SHAPE = VoxelShapes.box(0, 0, 0, 1, 12 / 16f, 1);
 
     public ChoppingBlock() {
         super(Properties.of(Material.WOOD, MaterialColor.WOOD));
@@ -32,12 +32,28 @@ public class ChoppingBlock extends Block {
 
     @Override
     public ActionResultType use(BlockState state, World level, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult raytrace) {
-        ChoppingBlockEntity choppingBlock = (ChoppingBlockEntity) level.getBlockEntity(pos);
-        if (choppingBlock.interact(player, player.getItemInHand(hand))) {
+        TileEntity blockEntity = level.getBlockEntity(pos);
+        if (!(blockEntity instanceof ChoppingBlockEntity)) {
+            return ActionResultType.PASS;
+        }
+
+        ChoppingBlockEntity choppingBlock = (ChoppingBlockEntity) blockEntity;
+        ItemStack main = player.getMainHandItem();
+        if (main.getToolTypes().contains(ToolType.AXE)) {
+            if (choppingBlock.hasRecipe()) {
+                if (!player.getCooldowns().isOnCooldown(main.getItem()) && hand == Hand.MAIN_HAND) {
+                    choppingBlock.doChop(player, main);
+                }
+                return ActionResultType.sidedSuccess(level.isClientSide());
+            }
+        }
+
+        ItemStack held = player.getItemInHand(hand);
+        if (choppingBlock.interact(player, held)) {
             return ActionResultType.sidedSuccess(level.isClientSide());
         }
 
-        return ActionResultType.FAIL;
+        return ActionResultType.PASS;
     }
 
     @Override
@@ -68,4 +84,6 @@ public class ChoppingBlock extends Block {
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new ChoppingBlockEntity();
     }
+
+
 }

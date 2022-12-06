@@ -1,7 +1,6 @@
 package dev.quarris.choppingblock.content;
 
 import com.google.gson.JsonObject;
-import com.mojang.realmsclient.util.JsonUtils;
 import dev.quarris.choppingblock.ModRegistry;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
