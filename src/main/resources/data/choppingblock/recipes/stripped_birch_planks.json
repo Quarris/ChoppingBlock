@@ -1,0 +1,10 @@
+{
+  "type": "choppingblock:chopping",
+  "ingredient": {
+    "item": "minecraft:birch_log"
+  },
+  "result": {
+    "item": "minecraft:birch_planks",
+    "count": 6
+  }
+}

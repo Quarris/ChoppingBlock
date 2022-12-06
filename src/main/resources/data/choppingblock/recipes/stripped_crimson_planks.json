@@ -1,0 +1,10 @@
+{
+  "type": "choppingblock:chopping",
+  "ingredient": {
+    "item": "minecraft:stripped_crimson_stem"
+  },
+  "result": {
+    "item": "minecraft:crimson_planks",
+    "count": 6
+  }
+}

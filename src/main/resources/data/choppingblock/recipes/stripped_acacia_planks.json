@@ -1,0 +1,10 @@
+{
+  "type": "choppingblock:chopping",
+  "ingredient": {
+    "item": "minecraft:stripped_acacia_log"
+  },
+  "result": {
+    "item": "minecraft:acacia_planks",
+    "count": 6
+  }
+}

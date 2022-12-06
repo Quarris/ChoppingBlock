@@ -1,0 +1,10 @@
+{
+  "type": "choppingblock:chopping",
+  "ingredient": {
+    "item": "minecraft:warped_stem"
+  },
+  "result": {
+    "item": "minecraft:warped_planks",
+    "count": 6
+  }
+}

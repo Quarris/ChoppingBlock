@@ -7,10 +7,9 @@ import net.minecraft.block.material.MaterialColor;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ActionResultType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.NonNullList;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -27,7 +26,31 @@ public class ChoppingBlock extends Block {
     private static final VoxelShape SHAPE = VoxelShapes.box(0, 0, 0, 1, 12 / 16f, 1);
 
     public ChoppingBlock() {
-        super(Properties.of(Material.WOOD, MaterialColor.WOOD));
+        super(Properties.of(Material.WOOD, MaterialColor.WOOD).harvestTool(ToolType.AXE).strength(2));
+    }
+
+    @Override
+    public void attack(BlockState state, World level, BlockPos pos, PlayerEntity player) {
+        if (!player.isShiftKeyDown()) {
+            return;
+        }
+
+        TileEntity blockEntity = level.getBlockEntity(pos);
+        if (!(blockEntity instanceof ChoppingBlockEntity)) {
+            return;
+        }
+        ChoppingBlockEntity choppingBlock = (ChoppingBlockEntity) blockEntity;
+        ItemStack main = player.getMainHandItem();
+        if (main.getToolTypes().contains(ToolType.AXE)) {
+            if (choppingBlock.insertAxe(main)) {
+                player.setItemInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
+                level.playSound(player, pos, SoundEvents.AXE_STRIP, SoundCategory.BLOCKS, 1, 1);
+            }
+        } else if (main.isEmpty() && choppingBlock.hasAxe()) {
+            ItemStack axe = choppingBlock.extractAxe();
+            player.setItemInHand(Hand.MAIN_HAND, axe);
+            level.playSound(player, pos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundCategory.BLOCKS, 1, 1);
+        }
     }
 
     @Override
@@ -61,7 +84,11 @@ public class ChoppingBlock extends Block {
         if (!state.is(newState.getBlock())) {
             TileEntity tile = level.getBlockEntity(pos);
             if (tile instanceof ChoppingBlockEntity) {
-                InventoryHelper.dropContents(level, pos, NonNullList.of(((ChoppingBlockEntity) tile).getItem()));
+                if (!level.isClientSide()) {
+                    ChoppingBlockEntity choppingBlock = ((ChoppingBlockEntity) tile);
+                    InventoryHelper.dropContents(level, pos, NonNullList.of(ItemStack.EMPTY, choppingBlock.getItem(), choppingBlock.getAxe()));
+                }
+
                 level.updateNeighbourForOutputSignal(pos, this);
             }
 
@@ -84,6 +111,4 @@ public class ChoppingBlock extends Block {
     public TileEntity createTileEntity(BlockState state, IBlockReader world) {
         return new ChoppingBlockEntity();
     }
-
-
 }

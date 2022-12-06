@@ -31,6 +31,7 @@ public class ChoppingBlockEntity extends TileEntity {
 
     private ChoppingBlockInventory inv = new ChoppingBlockInventory(this, 1);
     private LazyOptional<IItemHandler> lazyInv = LazyOptional.of(() -> this.inv);
+    private ItemStack axe = ItemStack.EMPTY;
 
     private int hits;
 
@@ -87,12 +88,34 @@ public class ChoppingBlockEntity extends TileEntity {
         });
     }
 
+    public boolean insertAxe(ItemStack axe) {
+        if (this.axe.isEmpty()) {
+            this.axe = axe;
+            return true;
+        }
+        return false;
+    }
+
+    public ItemStack extractAxe() {
+        ItemStack axe = this.axe;
+        this.axe = ItemStack.EMPTY;
+        return axe;
+    }
+
+    public boolean hasAxe() {
+        return !this.axe.isEmpty();
+    }
+
     public Optional<ChoppingRecipe> findRecipeFor(ItemStack input) {
         return this.level.getRecipeManager().getRecipeFor(ModRegistry.CHOPPING_RECIPE, new Inventory(input), this.level);
     }
 
     public ItemStack getItem() {
-        return this.inv.getStackInSlot(0);
+        return this.inv.getStackInSlot(0).copy();
+    }
+
+    public ItemStack getAxe() {
+        return this.axe.copy();
     }
 
     private void clearRecipe() {
@@ -111,6 +134,9 @@ public class ChoppingBlockEntity extends TileEntity {
             nbt.put("Inv", this.inv.serializeNBT());
         }
         nbt.putInt("Hits", this.hits);
+        if (!this.axe.isEmpty()) {
+            nbt.put("Axe", this.axe.save(new CompoundNBT()));
+        }
         return nbt;
     }
 
@@ -121,6 +147,9 @@ public class ChoppingBlockEntity extends TileEntity {
             this.inv.deserializeNBT(nbt.getCompound("Inv"));
         }
         this.hits = nbt.getInt("Hits");
+        if (nbt.contains("Axe")) {
+            this.axe = ItemStack.of(nbt.getCompound("Axe"));
+        }
     }
 
     @Override
