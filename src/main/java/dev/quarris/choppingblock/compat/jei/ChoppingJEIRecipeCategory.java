@@ -24,9 +24,9 @@ public class ChoppingJEIRecipeCategory implements IRecipeCategory<ChoppingRecipe
     private final IDrawable icon;
 
     public ChoppingJEIRecipeCategory(IGuiHelper guiHelper) {
-        background = guiHelper.drawableBuilder(ModRef.res("textures/gui/jei/background.png"), 0, 0, 64, 32)
+        this.background = guiHelper.drawableBuilder(ModRef.res("textures/gui/jei/background.png"), 0, 0, 64, 32)
             .build();
-        icon = guiHelper.createDrawableIngredient(new ItemStack(ModRegistry.CHOPPING_BLOCK.get()));
+        this.icon = guiHelper.createDrawableIngredient(new ItemStack(ModRegistry.CHOPPING_BLOCK.get()));
     }
 
     @Override
@@ -69,8 +69,8 @@ public class ChoppingJEIRecipeCategory implements IRecipeCategory<ChoppingRecipe
 
     @Override
     public void setRecipe(IRecipeLayout recipeLayout, ChoppingRecipe recipe, IIngredients ingredients) {
-        recipeLayout.getItemStacks().init(0, true, 4, 0);
-        recipeLayout.getItemStacks().init(1, false, 42, 0);
+        recipeLayout.getItemStacks().init(0, true, 4, 7);
+        recipeLayout.getItemStacks().init(1, false, 42, 7);
         recipeLayout.getItemStacks().set(ingredients);
     }
 }
