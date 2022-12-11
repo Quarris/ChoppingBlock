@@ -1,7 +1,7 @@
 {
   "type": "choppingblock:chopping",
   "ingredient": {
-    "item": "minecraft:jungle_log"
+    "tag": "minecraft:jungle_logs"
   },
   "result": {
     "item": "minecraft:jungle_planks",

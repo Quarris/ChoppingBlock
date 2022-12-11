@@ -1,7 +1,7 @@
 {
   "type": "choppingblock:chopping",
   "ingredient": {
-    "item": "minecraft:dark_oak_log"
+    "tag": "minecraft:dark_oak_logs"
   },
   "result": {
     "item": "minecraft:dark_oak_planks",

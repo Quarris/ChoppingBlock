@@ -1,7 +1,7 @@
 {
   "type": "choppingblock:chopping",
   "ingredient": {
-    "item": "minecraft:birch_log"
+    "tag": "minecraft:birch_logs"
   },
   "result": {
     "item": "minecraft:birch_planks",

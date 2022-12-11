@@ -10,6 +10,7 @@ import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.JSONUtils;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.world.World;
@@ -28,6 +29,9 @@ public class ChoppingRecipe implements IRecipe<IInventory> {
     private final SoundEvent hitSound;
     private final SoundEvent breakSound;
 
+    private final NonNullList ingredients = NonNullList.create();
+
+    @SuppressWarnings("unchecked")
     public ChoppingRecipe(ResourceLocation id, Ingredient ingredient, ItemStack result, int hits, SoundEvent hitSound, SoundEvent breakSound) {
         this.id = id;
         this.ingredient = ingredient;
@@ -35,6 +39,8 @@ public class ChoppingRecipe implements IRecipe<IInventory> {
         this.hits = hits;
         this.hitSound = hitSound;
         this.breakSound = breakSound;
+
+        this.ingredients.add(this.ingredient);
     }
 
     @Override
@@ -62,6 +68,15 @@ public class ChoppingRecipe implements IRecipe<IInventory> {
     @Override
     public ItemStack getResultItem() {
         return this.result;
+    }
+
+    public Ingredient getIngredient() {
+        return this.ingredient;
+    }
+
+    @Override
+    public NonNullList<Ingredient> getIngredients() {
+        return NonNullList.withSize(1, this.ingredient);
     }
 
     @Override
