@@ -1,7 +1,7 @@
 {
   "type": "choppingblock:chopping",
   "ingredient": {
-    "item": "minecraft:crimson_stem"
+    "tag": "minecraft:crimson_stems"
   },
   "result": {
     "item": "minecraft:crimson_planks",

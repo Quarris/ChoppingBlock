@@ -1,7 +1,7 @@
 {
   "type": "choppingblock:chopping",
   "ingredient": {
-    "item": "minecraft:oak_log"
+    "tag": "minecraft:oak_logs"
   },
   "result": {
     "item": "minecraft:oak_planks",

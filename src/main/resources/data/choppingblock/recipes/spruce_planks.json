@@ -1,7 +1,7 @@
 {
   "type": "choppingblock:chopping",
   "ingredient": {
-    "item": "minecraft:spruce_log"
+    "tag": "minecraft:spruce_logs"
   },
   "result": {
     "item": "minecraft:spruce_planks",
