@@ -2,25 +2,24 @@ package dev.quarris.choppingblock.content;
 
 import com.google.gson.JsonObject;
 import dev.quarris.choppingblock.ModRegistry;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.IRecipeSerializer;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.JSONUtils;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.world.World;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
 import javax.annotation.Nullable;
 
-public class ChoppingRecipe implements IRecipe<IInventory> {
+public class ChoppingRecipe implements Recipe<Container> {
 
     private final ResourceLocation id;
     private final Ingredient ingredient;
@@ -44,12 +43,12 @@ public class ChoppingRecipe implements IRecipe<IInventory> {
     }
 
     @Override
-    public boolean matches(IInventory inv, World level) {
+    public boolean matches(Container inv, Level level) {
         return this.ingredient.test(inv.getItem(0));
     }
 
     @Override
-    public ItemStack assemble(IInventory inv) {
+    public ItemStack assemble(Container inv) {
         return this.result.copy();
     }
 
@@ -90,29 +89,31 @@ public class ChoppingRecipe implements IRecipe<IInventory> {
     }
 
     @Override
-    public IRecipeSerializer<?> getSerializer() {
+    public RecipeSerializer<?> getSerializer() {
         return ModRegistry.CHOPPING_RECIPE_SERIALIZER.get();
     }
 
     @Override
-    public IRecipeType<?> getType() {
-        return ModRegistry.CHOPPING_RECIPE;
+    public RecipeType<?> getType() {
+        return ModRegistry.CHOPPING_RECIPE.get();
     }
 
-    public static class Serializer extends ForgeRegistryEntry<IRecipeSerializer<?>> implements IRecipeSerializer<ChoppingRecipe> {
+    public static class Serializer extends ForgeRegistryEntry<RecipeSerializer<?>> implements RecipeSerializer<ChoppingRecipe> {
 
         @Override
         public ChoppingRecipe fromJson(ResourceLocation id, JsonObject json) {
             Ingredient ingredient = CraftingHelper.getIngredient(json.get("ingredient"));
             ItemStack result = CraftingHelper.getItemStack(json.getAsJsonObject("result"), true);
-            int hits = JSONUtils.getAsInt(json, "hits", 3);
-            SoundEvent hitSound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(JSONUtils.getAsString(json, "hitSound", "block.wood.hit")));
-            SoundEvent breakSound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(JSONUtils.getAsString(json, "breakSound", "block.wood.break")));
+            int hits = json.has("hits") ? json.get("hits").getAsInt() : 3;
+            String hitSoundName = json.has("hitSound") ? json.get("hitSound").getAsString() : "block.wood.hit";
+            SoundEvent hitSound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(hitSoundName));
+            String breakSoundName = json.has("breakSound") ? json.get("breakSound").getAsString() : "block.wood.break";
+            SoundEvent breakSound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(breakSoundName));
             return new ChoppingRecipe(id, ingredient, result, hits, hitSound, breakSound);
         }
 
         @Override
-        public void toNetwork(PacketBuffer buf, ChoppingRecipe recipe) {
+        public void toNetwork(FriendlyByteBuf buf, ChoppingRecipe recipe) {
             recipe.ingredient.toNetwork(buf);
             buf.writeItem(recipe.result);
             buf.writeVarInt(recipe.hits);
@@ -122,7 +123,7 @@ public class ChoppingRecipe implements IRecipe<IInventory> {
 
         @Nullable
         @Override
-        public ChoppingRecipe fromNetwork(ResourceLocation id, PacketBuffer buf) {
+        public ChoppingRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buf) {
             Ingredient ingredient = Ingredient.fromNetwork(buf);
             ItemStack result = buf.readItem();
             int hits = buf.readVarInt();

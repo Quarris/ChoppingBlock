@@ -2,23 +2,24 @@ package dev.quarris.choppingblock.content;
 
 import dev.quarris.choppingblock.ModRef;
 import dev.quarris.choppingblock.ModRegistry;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.EntityPredicate;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.SUpdateTileEntityPacket;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.Direction;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
@@ -27,7 +28,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import javax.annotation.Nonnull;
 import java.util.Optional;
 
-public class ChoppingBlockEntity extends TileEntity {
+public class ChoppingBlockEntity extends BlockEntity {
 
     private ChoppingBlockInventory inv = new ChoppingBlockInventory(this, 1);
     private LazyOptional<IItemHandler> lazyInv = LazyOptional.of(() -> this.inv);
@@ -35,15 +36,18 @@ public class ChoppingBlockEntity extends TileEntity {
 
     private int hits;
 
-    public ChoppingBlockEntity(TileEntityType<?> type) {
-        super(type);
+    public float axeAX;
+    public float axeAZ;
+
+    public ChoppingBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
 
-    public ChoppingBlockEntity() {
-        this(ModRegistry.CHOPPING_BLOCK_ENTITY.get());
+    public ChoppingBlockEntity(BlockPos pos, BlockState state) {
+        this(ModRegistry.CHOPPING_BLOCK_ENTITY.get(), pos, state);
     }
 
-    public boolean interact(PlayerEntity player, ItemStack item) {
+    public boolean interact(Player player, ItemStack item) {
         boolean extracted = false;
         ItemStack slot = this.inv.getStackInSlot(0);
         if (!slot.isEmpty()) {
@@ -52,12 +56,12 @@ public class ChoppingBlockEntity extends TileEntity {
                 item.grow(1);
                 return true;
             } else {
-                ItemHandlerHelper.giveItemToPlayer(player, slot, player.inventory.selected);
+                ItemHandlerHelper.giveItemToPlayer(player, slot, player.getInventory().selected);
             }
             extracted = true;
         }
 
-        Optional<ChoppingRecipe> recipe = this.level.getRecipeManager().getRecipeFor(ModRegistry.CHOPPING_RECIPE, new Inventory(item), this.level);
+        Optional<ChoppingRecipe> recipe = this.level.getRecipeManager().getRecipeFor(ModRegistry.CHOPPING_RECIPE.get(), new SimpleContainer(item), this.level);
         if (recipe.isPresent()) {
             ItemStack toInsert = item.copy();
             toInsert.setCount(1);
@@ -69,7 +73,7 @@ public class ChoppingBlockEntity extends TileEntity {
         return extracted;
     }
 
-    public void doChop(PlayerEntity player, ItemStack axe) {
+    public void doChop(Player player, ItemStack axe) {
         this.findRecipeFor(this.inv.getStackInSlot(0)).ifPresent(recipe -> {
             axe.hurtAndBreak(1, player, p -> {
             });
@@ -84,13 +88,15 @@ public class ChoppingBlockEntity extends TileEntity {
                 this.level.addFreshEntity(drop);
                 this.clearRecipe();
             }
-            this.level.playSound(player, this.worldPosition, sound, SoundCategory.BLOCKS, 1, 1);
+            this.level.playSound(player, this.worldPosition, sound, SoundSource.BLOCKS, 1, 1);
         });
     }
 
     public boolean insertAxe(ItemStack axe) {
         if (this.axe.isEmpty()) {
             this.axe = axe;
+            this.axeAX = (float) (Math.random() * 10 - 5);
+            this.axeAZ = (float) (Math.random() * 10 - 5);
             return true;
         }
         return false;
@@ -107,7 +113,7 @@ public class ChoppingBlockEntity extends TileEntity {
     }
 
     public Optional<ChoppingRecipe> findRecipeFor(ItemStack input) {
-        return this.level.getRecipeManager().getRecipeFor(ModRegistry.CHOPPING_RECIPE, new Inventory(input), this.level);
+        return this.level.getRecipeManager().getRecipeFor(ModRegistry.CHOPPING_RECIPE.get(), new SimpleContainer(input), this.level);
     }
 
     public ItemStack getItem() {
@@ -127,56 +133,64 @@ public class ChoppingBlockEntity extends TileEntity {
         return this.findRecipeFor(this.inv.getStackInSlot(0)).isPresent();
     }
 
+
     @Override
-    public CompoundNBT save(CompoundNBT nbt) {
-        super.save(nbt);
+    public void saveAdditional(CompoundTag nbt) {
+        super.saveAdditional(nbt);
         if (!this.inv.getStackInSlot(0).isEmpty()) {
             nbt.put("Inv", this.inv.serializeNBT());
         }
         nbt.putInt("Hits", this.hits);
         if (!this.axe.isEmpty()) {
-            nbt.put("Axe", this.axe.save(new CompoundNBT()));
+            nbt.put("Axe", this.axe.save(new CompoundTag()));
+            if (nbt.contains("AxeAX")) {
+                nbt.putFloat("AxeAX", this.axeAX);
+                nbt.putFloat("AxeAZ", this.axeAZ);
+            }
         }
-        return nbt;
     }
 
     @Override
-    public void load(BlockState state, CompoundNBT nbt) {
-        super.load(state, nbt);
+    public void load(CompoundTag nbt) {
+        super.load(nbt);
         if (nbt.contains("Inv")) {
             this.inv.deserializeNBT(nbt.getCompound("Inv"));
         }
         this.hits = nbt.getInt("Hits");
         if (nbt.contains("Axe")) {
             this.axe = ItemStack.of(nbt.getCompound("Axe"));
+            this.axeAX = nbt.getFloat("AxeAX");
+            this.axeAZ = nbt.getFloat("AxeAZ");
         }
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
-        this.load(this.getBlockState(), pkt.getTag());
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
+        this.load(pkt.getTag());
     }
 
     @Override
-    public CompoundNBT getUpdateTag() {
-        return this.save(new CompoundNBT());
+    public CompoundTag getUpdateTag() {
+        CompoundTag nbt = new CompoundTag();
+        this.saveAdditional(nbt);
+        return nbt;
     }
 
     @Override
-    public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.worldPosition, -1, this.getUpdateTag());
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    protected void invalidateCaps() {
+    public void invalidateCaps() {
         super.invalidateCaps();
         this.lazyInv.invalidate();
     }
 
     public void sendToClients() {
         if (!this.level.isClientSide()) {
-            ServerWorld serverLevel = ((ServerWorld) this.level);
-            serverLevel.getNearbyPlayers(EntityPredicate.DEFAULT, null, new AxisAlignedBB(this.worldPosition).inflate(16)).stream().map(p -> ((ServerPlayerEntity) p)).forEach(player -> {
+            ServerLevel serverLevel = ((ServerLevel) this.level);
+            serverLevel.getNearbyPlayers(TargetingConditions.DEFAULT, null, new AABB(this.worldPosition).inflate(16)).stream().map(p -> ((ServerPlayer) p)).forEach(player -> {
                 player.connection.send(this.getUpdatePacket());
             });
         }

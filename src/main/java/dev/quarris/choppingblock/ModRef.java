@@ -1,8 +1,9 @@
 package dev.quarris.choppingblock;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
+import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.items.IItemHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +18,6 @@ public class ModRef {
     }
 
     public static class Capabilities {
-        @CapabilityInject(IItemHandler.class)
-        public static Capability<IItemHandler> ITEMS;
+        public static Capability<IItemHandler> ITEMS = CapabilityManager.get(new CapabilityToken<>() {});
     }
 }
