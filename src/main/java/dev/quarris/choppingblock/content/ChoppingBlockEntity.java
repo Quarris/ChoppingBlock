@@ -35,6 +35,9 @@ public class ChoppingBlockEntity extends TileEntity {
 
     private int hits;
 
+    public float axeAX;
+    public float axeAZ;
+
     public ChoppingBlockEntity(TileEntityType<?> type) {
         super(type);
     }
@@ -91,6 +94,8 @@ public class ChoppingBlockEntity extends TileEntity {
     public boolean insertAxe(ItemStack axe) {
         if (this.axe.isEmpty()) {
             this.axe = axe;
+            this.axeAX = (float) (Math.random() * 10 - 5);
+            this.axeAZ = (float) (Math.random() * 10 - 5);
             return true;
         }
         return false;
@@ -136,6 +141,8 @@ public class ChoppingBlockEntity extends TileEntity {
         nbt.putInt("Hits", this.hits);
         if (!this.axe.isEmpty()) {
             nbt.put("Axe", this.axe.save(new CompoundNBT()));
+            nbt.putFloat("AxeAX", this.axeAX);
+            nbt.putFloat("AxeAZ", this.axeAZ);
         }
         return nbt;
     }
@@ -149,6 +156,10 @@ public class ChoppingBlockEntity extends TileEntity {
         this.hits = nbt.getInt("Hits");
         if (nbt.contains("Axe")) {
             this.axe = ItemStack.of(nbt.getCompound("Axe"));
+            if (nbt.contains("AxeAX")) {
+                this.axeAX = nbt.getFloat("AxeAX");
+                this.axeAZ = nbt.getFloat("AxeAZ");
+            }
         }
     }
 

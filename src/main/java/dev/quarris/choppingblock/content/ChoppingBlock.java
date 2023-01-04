@@ -1,13 +1,19 @@
 package dev.quarris.choppingblock.content;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.inventory.InventoryHelper;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.DirectionProperty;
+import net.minecraft.state.StateContainer;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
@@ -16,6 +22,7 @@ import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ToolType;
 
@@ -24,9 +31,17 @@ import javax.annotation.Nullable;
 public class ChoppingBlock extends Block {
 
     private static final VoxelShape SHAPE = VoxelShapes.box(0, 0, 0, 1, 12 / 16f, 1);
+    public static final DirectionProperty FACING = HorizontalBlock.FACING;
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
     public ChoppingBlock() {
         super(Properties.of(Material.WOOD, MaterialColor.WOOD).harvestTool(ToolType.AXE).strength(2));
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(FACING, WATERLOGGED);
     }
 
     @Override
@@ -79,6 +94,13 @@ public class ChoppingBlock extends Block {
         return ActionResultType.PASS;
     }
 
+    public BlockState getStateForPlacement(BlockItemUseContext ctx) {
+        BlockState placed = this.defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+        FluidState fluid = ctx.getLevel().getFluidState(ctx.getClickedPos());
+        placed = placed.setValue(WATERLOGGED, fluid.getType() == Fluids.WATER);
+        return placed;
+    }
+
     @Override
     public void onRemove(BlockState state, World level, BlockPos pos, BlockState newState, boolean p_196243_5_) {
         if (!state.is(newState.getBlock())) {
@@ -94,6 +116,18 @@ public class ChoppingBlock extends Block {
 
             super.onRemove(state, level, pos, newState, p_196243_5_);
         }
+    }
+
+    public FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+    }
+
+    public BlockState updateShape(BlockState p_51461_, Direction p_51462_, BlockState p_51463_, IWorld p_51464_, BlockPos p_51465_, BlockPos p_51466_) {
+        if (p_51461_.getValue(WATERLOGGED)) {
+            p_51464_.getLiquidTicks().scheduleTick(p_51465_, Fluids.WATER, Fluids.WATER.getTickDelay(p_51464_));
+        }
+
+        return super.updateShape(p_51461_, p_51462_, p_51463_, p_51464_, p_51465_, p_51466_);
     }
 
     @Override

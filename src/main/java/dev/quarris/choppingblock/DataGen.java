@@ -32,7 +32,7 @@ public class DataGen {
 
         @Override
         protected void registerStatesAndModels() {
-            this.simpleBlock(ModRegistry.CHOPPING_BLOCK.get(), this.models().withExistingParent("chopping_block", this.modLoc("chopping_block_raw")).texture("side", this.modLoc("block/chopping_block_side")).texture("end", this.modLoc("block/chopping_block_top")));
+            this.horizontalBlock(ModRegistry.CHOPPING_BLOCK.get(), this.models().withExistingParent("chopping_block", this.modLoc("chopping_block_raw")).texture("side", this.modLoc("block/chopping_block_side")).texture("end", this.modLoc("block/chopping_block_top")));
         }
     }
 
