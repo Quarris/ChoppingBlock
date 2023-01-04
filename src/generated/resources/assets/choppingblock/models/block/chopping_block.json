@@ -1,7 +1,0 @@
-{
-  "parent": "choppingblock:block/chopping_block_raw",
-  "textures": {
-    "side": "choppingblock:block/chopping_block_side",
-    "end": "choppingblock:block/chopping_block_top"
-  }
-}

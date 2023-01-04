@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " W ",
+    "LWL"
+  ],
+  "key": {
+    "W": {
+      "tag": "minecraft:logs"
+    },
+    "L": {
+      "tag": "forge:leather"
+    }
+  },
+  "result": {
+    "item": "choppingblock:chopping_block"
+  }
+}
